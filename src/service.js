@@ -128,9 +128,9 @@ export function createService({ store, jira, now = () => new Date().toISOString(
       return found.length ? found.map((a) => assetText(a, index)).join('\n\n') : `Nothing matches "${query}".`;
     },
 
-    async submitReceipt(input, actor) {
+    async submitReceipt(input) {
       const { issue, receipts, assessed } = await ticket(input.issueKey);
-      const receipt = normalizeReceipt({ ...input, issueKey: issue.key }, { id: newId(), now: now(), by: actor });
+      const receipt = normalizeReceipt({ ...input, issueKey: issue.key }, { id: newId(), now: now() });
       await store.addReceipt(receipt);
       const unnotified = unnotifiedOwners(assessed, [...receipts, receipt]);
       await jira.addComment(issue.key, receiptAdf(receipt, unnotified));

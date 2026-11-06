@@ -6,6 +6,8 @@ customer's Atlassian site.
 **What it stores.** The dbt catalog (model, source and exposure names, descriptions,
 columns, owners, contracts and lineage), data change receipts and issue scan results, in
 Forge storage within the customer's site. The developer has no access to this data.
+Downstream does not store Atlassian account IDs or other personal data about users; a receipt
+names the agent that submitted it, not the person.
 
 **What it reads.** Jira work items the invoking user can see (summary and description). The
 issue guard reads newly created or edited work items as the app.

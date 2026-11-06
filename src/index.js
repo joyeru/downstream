@@ -10,7 +10,6 @@ export { onConnectionChange, validateConnection, resyncAll } from './connector.j
 
 const asUser = () => createService({ store, jira: jiraClient('user') });
 const asApp = () => createService({ store, jira: jiraClient('app') });
-const accountOf = (context) => context?.principal?.accountId ?? context?.accountId ?? null;
 
 // Rovo actions and MCP tools. Failures come back as text so the agent can relay them.
 const action = (fn) => async (payload = {}, context = {}) => {
@@ -30,7 +29,8 @@ export const checkChange = action((p) => {
 export const getImpact = action((p) => asUser().impactOf(p.asset, p.column));
 export const describeAsset = action((p) => asUser().describeAsset(p.asset));
 export const findAssets = action((p) => asUser().findAssets(p.query));
-export const submitChangeReceipt = action((p, c) => asUser().submitReceipt({ ...p, issueKey: issueKeyOf(p) }, accountOf(c)));
+// Receipts name the agent, not the Atlassian account, so the app stores no personal data.
+export const submitChangeReceipt = action((p) => asUser().submitReceipt({ ...p, issueKey: issueKeyOf(p) }));
 
 // Product trigger: warn when a new or edited work item would break data others depend on.
 export async function guardIssue(event) {

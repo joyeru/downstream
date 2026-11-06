@@ -366,7 +366,7 @@ export function assetText(a, index) {
 
 // --- Change receipts ------------------------------------------------------------------
 
-export function normalizeReceipt(input, { id, now, by }) {
+export function normalizeReceipt(input, { id, now }) {
   const issueKey = clean(input.issueKey, 40).toUpperCase();
   if (!KEY_RE.test(issueKey)) throw new Error(`"${input.issueKey}" is not a work item key.`);
   const summary = clean(input.summary, 2000);
@@ -381,7 +381,6 @@ export function normalizeReceipt(input, { id, now, by }) {
     notified: splitList(input.notified),
     tests: clean(input.tests, 1000),
     prUrl,
-    by: by ?? null,
     createdAt: now,
   };
 }
