@@ -13,7 +13,7 @@ modules:
         Knows your dbt lineage. Tells you what a data change breaks, which
         dashboards it feeds and who to tell, checks change plans before SQL is
         edited, and records change receipts on Jira work items.
-      icon: resource:static;icon.svg
+      icon: https://cdn.jsdelivr.net/gh/joyeru/downstream@679fec254495e41e64d091b4ada0e648798862d2/resources/static/icon.svg
       prompt: resource:agent;prompt.txt
       conversationStarters:
         - What breaks downstream if we do this work item?
