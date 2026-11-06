@@ -2,6 +2,8 @@
 
 **Know what a data change breaks before it ships.**
 
+[Demo video (1:45)](https://youtu.be/nxstWXmF-0c) · Built on Atlassian Forge for Codegeist 2026
+
 Data teams plan dbt work in Jira, and more and more of it is now written by AI coding
 agents. A ticket says "drop discount_amount from orders" or "rename amount to gross_amount".
 Nothing in the ticket says that `fct_revenue` reads that column, that the Monday revenue
