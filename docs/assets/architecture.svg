@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 820" font-family="-apple-system, Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#5e6c84"/>
+    </marker>
+    <style>
+      .box{fill:#fff;stroke:#c1c7d0;stroke-width:2;rx:14}
+      .core{fill:#e9f2ff;stroke:#1d7afc;stroke-width:2.5}
+      .h{font-size:26px;font-weight:700;fill:#172b4d}
+      .t{font-size:20px;fill:#44546f}
+      .m{font-size:17px;fill:#626f86;font-family:Menlo, monospace}
+      .lbl{font-size:17px;fill:#5e6c84}
+      .ln{stroke:#5e6c84;stroke-width:2.2;fill:none;marker-end:url(#a)}
+    </style>
+  </defs>
+  <rect width="1600" height="820" fill="#f7f8f9"/>
+  <text x="60" y="70" font-size="34" font-weight="800" fill="#172b4d">Downstream architecture</text>
+  <text x="60" y="104" class="t">One Forge app: dbt lineage in, impact answers out, to every surface where data work is planned or done.</text>
+
+  <!-- source -->
+  <rect class="box" x="60" y="200" width="330" height="250"/>
+  <text x="84" y="242" class="h">dbt project</text>
+  <text x="84" y="272" class="t">GitHub repository</text>
+  <text x="84" y="318" class="m">ref() / source()</text>
+  <text x="84" y="346" class="m">meta.owner, groups</text>
+  <text x="84" y="374" class="m">contract.enforced</text>
+  <text x="84" y="402" class="m">exposures</text>
+  <text x="84" y="430" class="m">column usage in SQL</text>
+
+  <!-- core -->
+  <rect class="box core" x="520" y="160" width="520" height="520"/>
+  <text x="548" y="204" class="h">Downstream (Forge, Node.js 24)</text>
+  <rect class="box" x="548" y="226" width="464" height="92"/>
+  <text x="568" y="262" class="t" font-weight="600">graph:connector + scheduledTrigger</text>
+  <text x="568" y="292" class="m">GitHub import, daily re-sync</text>
+  <rect class="box" x="548" y="336" width="464" height="120"/>
+  <text x="568" y="372" class="t" font-weight="600">core.js: lineage and change detection</text>
+  <text x="568" y="402" class="m">column-level impact, owners,</text>
+  <text x="568" y="428" class="m">severity: blocking / breaking / risky</text>
+  <rect class="box" x="548" y="474" width="464" height="84"/>
+  <text x="568" y="510" class="t" font-weight="600">Forge KVS</text>
+  <text x="568" y="538" class="m">catalog pages, receipts, scans</text>
+  <rect class="box" x="548" y="576" width="464" height="84"/>
+  <text x="568" y="612" class="t" font-weight="600">6 actions (Rovo + MCP tools)</text>
+  <text x="568" y="640" class="m">check-change, get-impact, receipts…</text>
+
+  <!-- surfaces -->
+  <rect class="box" x="1170" y="140" width="370" height="96"/>
+  <text x="1192" y="178" class="h">Jira work item</text>
+  <text x="1192" y="210" class="t">impact panel + issue guard comment</text>
+  <rect class="box" x="1170" y="256" width="370" height="96"/>
+  <text x="1192" y="294" class="h">Catalog page</text>
+  <text x="1192" y="326" class="t">models, owners, contracts, usage</text>
+  <rect class="box" x="1170" y="372" width="370" height="96"/>
+  <text x="1192" y="410" class="h">Rovo agent</text>
+  <text x="1192" y="442" class="t">rovo:agent "Downstream"</text>
+  <rect class="box" x="1170" y="488" width="370" height="96"/>
+  <text x="1192" y="526" class="h">Coding agents</text>
+  <text x="1192" y="558" class="t">rovo:mcp: Claude Code, Cursor</text>
+  <rect class="box" x="1170" y="604" width="370" height="96"/>
+  <text x="1192" y="642" class="h">Teamwork Graph</text>
+  <text x="1192" y="674" class="t">Rovo Search and Chat see lineage</text>
+
+  <!-- arrows -->
+  <path class="ln" d="M390 300 C 450 300, 470 272, 546 272"/>
+  <text x="404" y="262" class="lbl">GitHub API</text>
+  <path class="ln" d="M780 318 L780 334"/>
+  <path class="ln" d="M780 456 L780 472"/>
+  <path class="ln" d="M1040 270 C 1100 270, 1110 188, 1168 188"/>
+  <path class="ln" d="M1040 300 C 1100 300, 1110 304, 1168 304"/>
+  <path class="ln" d="M1012 618 C 1100 618, 1100 420, 1168 420"/>
+  <path class="ln" d="M1012 618 C 1100 618, 1110 536, 1168 536"/>
+  <path class="ln" d="M1012 250 C 1090 250, 1080 652, 1168 652"/>
+  <text x="1046" y="760" class="lbl">Reads run as the invoking user; comments are posted by the app.</text>
+</svg>

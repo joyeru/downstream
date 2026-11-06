@@ -1,0 +1,14 @@
+version: 2
+models:
+  - name: stg_customers
+    description: One row per customer, cleaned from raw.customers.
+    meta: { owner: Data platform }
+    columns: [{ name: customer_id }, { name: first_name }, { name: last_name }, { name: email }]
+  - name: stg_orders
+    description: One row per order, cleaned from raw.orders.
+    meta: { owner: Data platform }
+    columns: [{ name: order_id }, { name: customer_id }, { name: order_date }, { name: status }]
+  - name: stg_payments
+    description: One row per payment. Amounts are converted from cents.
+    meta: { owner: Data platform }
+    columns: [{ name: payment_id }, { name: order_id }, { name: payment_method }, { name: amount }]

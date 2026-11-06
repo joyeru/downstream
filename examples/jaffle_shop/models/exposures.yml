@@ -1,0 +1,21 @@
+version: 2
+exposures:
+  - name: revenue_dashboard
+    label: Revenue dashboard
+    type: dashboard
+    url: https://example.com/dashboards/revenue
+    description: Daily revenue and discounts reviewed in the Monday business review.
+    owner: { name: Finance analytics, email: finance-analytics@example.com }
+    depends_on: ["ref('fct_revenue')"]
+  - name: churn_model
+    label: Churn prediction model
+    type: ml
+    description: Weekly retrained model that scores customers for retention campaigns.
+    owner: { name: ML platform, email: ml-platform@example.com }
+    depends_on: ["ref('customers')", "ref('orders')"]
+  - name: finance_close_export
+    label: Monthly finance close export
+    type: application
+    description: Order totals exported to the ERP at month end.
+    owner: { name: Finance operations, email: finops@example.com }
+    depends_on: ["ref('orders')"]

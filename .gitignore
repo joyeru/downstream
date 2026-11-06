@@ -1,0 +1,4 @@
+node_modules/
+.env
+# Submission notes for the entrant, kept local
+docs/SUBMISSION.md

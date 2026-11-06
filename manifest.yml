@@ -1,0 +1,292 @@
+app:
+  id: ari:cloud:ecosystem::app/81ddbd8e-8312-4767-ba9d-f34793b61bc3
+  runtime:
+    name: nodejs24.x
+    memoryMB: 256
+    architecture: arm64
+
+modules:
+  rovo:agent:
+    - key: downstream-agent
+      name: Downstream
+      description: >-
+        Knows your dbt lineage. Tells you what a data change breaks, which
+        dashboards it feeds and who to tell, checks change plans before SQL is
+        edited, and records change receipts on Jira work items.
+      icon: resource:static;icon.svg
+      prompt: resource:agent;prompt.txt
+      conversationStarters:
+        - What breaks downstream if we do this work item?
+        - Check my change plan before I edit the SQL
+        - Who owns the orders model and what reads it?
+        - Which dashboards depend on fct_revenue?
+      followUpPrompt: Suggest the next Downstream step, such as checking a plan,
+        notifying owners or posting a change receipt.
+      actions:
+        - get-ticket-impact
+        - check-change
+        - get-impact
+        - describe-asset
+        - find-assets
+        - submit-change-receipt
+
+  rovo:mcp:
+    - key: downstream-mcp
+      name: Downstream
+      tools:
+        - get-ticket-impact
+        - check-change
+        - get-impact
+        - describe-asset
+        - find-assets
+        - submit-change-receipt
+
+  action:
+    - key: get-ticket-impact
+      name: Get work item data impact
+      function: ticket-impact-fn
+      actionVerb: GET
+      description: >-
+        Finds the dbt models, sources and columns a Jira work item proposes to
+        change and returns what each change breaks downstream, the dashboards it
+        feeds, owners to notify and what to do. Call before planning data work.
+      inputs:
+        issueKey:
+          title: Work item key
+          type: string
+          required: true
+          description: The Jira work item key, for example DATA-42.
+    - key: check-change
+      name: Check a data change plan
+      function: check-change-fn
+      actionVerb: GET
+      description: >-
+        Checks a planned change to dbt models or columns before SQL is edited.
+        Returns ok, each change with its severity (blocking for enforced
+        contracts, breaking, risky or safe), what breaks, consumers and owners.
+      inputs:
+        plan:
+          title: Change plan
+          type: string
+          required: true
+          description: The planned change in plain text, naming models and columns, for
+            example "rename amount to gross_amount in orders".
+        issueKey:
+          title: Work item key
+          type: string
+          required: false
+          description: The Jira work item the plan is for, so models it names are
+            understood.
+    - key: get-impact
+      name: Get downstream impact
+      function: get-impact-fn
+      actionVerb: GET
+      description: >-
+        Lists everything downstream of a dbt model, source or column: models
+        that read it, models built on those, dashboards and other consumers, and
+        their owners.
+      inputs:
+        asset:
+          title: Model or source
+          type: string
+          required: true
+          description: A dbt model name like orders, or a source like raw.payments.
+        column:
+          title: Column
+          type: string
+          required: false
+          description: A column of that model, to see only what reads that column.
+    - key: describe-asset
+      name: Describe a dbt asset
+      function: describe-asset-fn
+      actionVerb: GET
+      description: >-
+        Describes a dbt model, source or exposure: owner, contract, columns,
+        what it reads from and what uses it.
+      inputs:
+        asset:
+          title: Name
+          type: string
+          required: true
+          description: A model, source or exposure name, for example fct_revenue.
+    - key: find-assets
+      name: Find dbt assets
+      function: find-assets-fn
+      actionVerb: GET
+      description: >-
+        Searches dbt models, sources and exposures by name, owner, description
+        or column. Use it to answer "who owns X?" or "which dashboards use Y?".
+      inputs:
+        query:
+          title: Query
+          type: string
+          required: true
+          description: Words to search for, such as a table, column, team or dashboard name.
+    - key: submit-change-receipt
+      name: Submit a data change receipt
+      function: receipt-fn
+      actionVerb: CREATE
+      description: >-
+        Posts a data change receipt on a Jira work item when the work is done:
+        what changed, owners notified, tests run and the pull request. Reports
+        affected owners who were not notified.
+      inputs:
+        issueKey:
+          title: Work item key
+          type: string
+          required: true
+          description: The Jira work item key, for example DATA-42.
+        summary:
+          title: Summary
+          type: string
+          required: true
+          description: What changed, in a few sentences.
+        notified:
+          title: Owners notified
+          type: string
+          required: false
+          description: Comma-separated owners or teams that were told about the change.
+        tests:
+          title: Tests
+          type: string
+          required: false
+          description: How the change was tested, for example "dbt build, 23 passed".
+        prUrl:
+          title: Pull request
+          type: string
+          required: false
+          description: Link to the pull request.
+        agent:
+          title: Agent name
+          type: string
+          required: false
+          description: The agent or tool that made the change, for example "Claude Code".
+
+  jira:issuePanel:
+    - key: downstream-panel
+      resource: panel
+      resolver:
+        function: ui-fn
+      render: native
+      title: Downstream impact
+      icon: resource:static;icon.svg
+
+  jira:globalPage:
+    - key: downstream-catalog
+      resource: catalog
+      resolver:
+        function: ui-fn
+      render: native
+      title: Downstream
+
+  trigger:
+    - key: issue-guard
+      function: guard-fn
+      events:
+        - avi:jira:created:issue
+        - avi:jira:updated:issue
+      filter:
+        ignoreSelf: true
+
+  scheduledTrigger:
+    - key: dbt-resync
+      function: resync-fn
+      interval: day
+
+  graph:connector:
+    - key: dbt-connector
+      name: dbt
+      icons:
+        light: https://cdn.jsdelivr.net/npm/@primer/octicons@19.42.0/build/svg/database-24.svg
+        dark: https://cdn.jsdelivr.net/npm/@primer/octicons@19.42.0/build/svg/database-24.svg
+      objectTypes:
+        - atlassian:document
+        - atlassian:dashboard
+      capabilities:
+        replicatesPermissions: false
+        syncFidelity: upsert
+        supportsIncrementalSync: false
+      datasource:
+        formConfiguration:
+          instructions:
+            - Downstream reads a dbt project (models, sources, exposures, owners
+              and contracts) from a GitHub repository.
+            - Imported lineage is visible to everyone in this workspace and is
+              re-synced daily.
+          form:
+            - key: repo
+              type: header
+              title: dbt project on GitHub
+              description: The repository and folder that contain dbt_project.yml.
+              properties:
+                - key: repository
+                  label: Repository (owner/name)
+                  type: string
+                  isRequired: true
+                - key: path
+                  label: Project folder (empty for the repository root)
+                  type: string
+                  isRequired: false
+                - key: branch
+                  label: Branch (default main)
+                  type: string
+                  isRequired: false
+                - key: token
+                  label: Read-only access token (private repositories only)
+                  type: string
+                  isRequired: false
+                  isSensitive: true
+          validateConnection:
+            function: validate-connection-fn
+        onConnectionChange:
+          function: connection-change-fn
+
+  function:
+    - key: ui-fn
+      handler: index.handler
+    - key: ticket-impact-fn
+      handler: index.getTicketImpact
+    - key: check-change-fn
+      handler: index.checkChange
+    - key: get-impact-fn
+      handler: index.getImpact
+    - key: describe-asset-fn
+      handler: index.describeAsset
+    - key: find-assets-fn
+      handler: index.findAssets
+    - key: receipt-fn
+      handler: index.submitChangeReceipt
+    - key: guard-fn
+      handler: index.guardIssue
+    - key: resync-fn
+      handler: index.resyncAll
+    - key: connection-change-fn
+      handler: index.onConnectionChange
+    - key: validate-connection-fn
+      handler: index.validateConnection
+
+resources:
+  - key: panel
+    path: src/frontend/panel.jsx
+  - key: catalog
+    path: src/frontend/catalog.jsx
+  - key: agent
+    path: resources/agent
+  - key: static
+    path: resources/static
+
+permissions:
+  scopes:
+    - read:jira-work
+    - write:jira-work
+    - storage:app
+    - read:object:jira
+    - write:object:jira
+    - delete:object:jira
+  external:
+    fetch:
+      backend:
+        - address: api.github.com
+          inScopeEUD: false
+        - address: raw.githubusercontent.com
+          inScopeEUD: false

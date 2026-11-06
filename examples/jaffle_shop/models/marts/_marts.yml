@@ -1,0 +1,33 @@
+version: 2
+groups:
+  - name: finance
+    owner: { name: Finance analytics, email: finance-analytics@example.com }
+models:
+  - name: orders
+    description: One row per order with its payment totals. Public model read by finance and ML.
+    group: finance
+    access: public
+    config:
+      contract: { enforced: true }
+    columns:
+      - { name: order_id, data_type: integer }
+      - { name: customer_id, data_type: integer }
+      - { name: order_date, data_type: date }
+      - { name: status, data_type: varchar }
+      - { name: discount_amount, data_type: numeric }
+      - { name: amount, data_type: numeric }
+  - name: customers
+    description: One row per customer with first and latest order and lifetime value.
+    meta: { owner: Growth analytics }
+    columns:
+      - { name: customer_id }
+      - { name: first_name }
+      - { name: last_name }
+      - { name: first_order }
+      - { name: most_recent_order }
+      - { name: number_of_orders }
+      - { name: lifetime_value }
+  - name: fct_revenue
+    description: Daily revenue and discounts for completed orders.
+    group: finance
+    columns: [{ name: order_date }, { name: revenue }, { name: discounts }, { name: completed_orders }]
