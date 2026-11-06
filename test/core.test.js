@@ -107,6 +107,16 @@ test('plain-word model names need context, technical names do not', () => {
   assert.deepEqual(detectChanges('Cast `orders`.status to an enum.', assets).map((c) => [c.column, c.op]), [['status', 'type']]);
 });
 
+test('a new model version is not a change to the contracted model', () => {
+  const context = 'Clean up the orders model. Drop discount_amount and rename amount to gross_amount.';
+  // The plan an agent writes after Downstream blocks it: the columns change in orders_v2 only.
+  const plan = 'Create orders_v2: drop discount_amount, rename amount to gross_amount. Keep orders v1 unchanged until consumers migrate, then deprecate it.';
+  assert.deepEqual(detectChanges(plan, assets, { context }), []);
+  // A plain mention next to the version still counts.
+  const both = detectChanges('Add orders_v2 and drop discount_amount from the orders model.', assets, { context });
+  assert.deepEqual(both.map((c) => [c.assetId, c.column, c.op]), [['model.orders', 'discount_amount', 'drop']]);
+});
+
 test('assessChanges ranks contract breaks first and explains what to do', () => {
   const assessed = assessChanges(detectChanges('In fct_revenue, exclude refunds. Rename orders.amount to gross_amount.', assets), index);
   assert.deepEqual(assessed.map((c) => [c.assetId, c.op, c.severity]), [

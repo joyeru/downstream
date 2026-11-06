@@ -253,6 +253,11 @@ function mentionIndex(asset, s) {
   return s.search(re);
 }
 
+// "orders_v2", "orders v2", "version 2 of orders": a new model version, which changes nothing
+// that already exists. This is the fix Downstream itself recommends for contracted models.
+const versionRe = (name) =>
+  new RegExp(`(?<![A-Za-z0-9_])${esc(name)}(?:_v|\\s+v|\\s+version\\s*)\\d+(?![A-Za-z0-9_])|\\bversion\\s*\\d+\\s+of\\s+(?:the\\s+)?\`?${esc(name)}(?![A-Za-z0-9_])`, 'gi');
+
 // Changes a work item or plan proposes to known assets: [{ assetId, column, op, evidence }].
 // `context` (such as the work item a plan is for) can name the models the text refers to.
 export function detectChanges(text, assets, { context = '' } = {}) {
@@ -267,9 +272,12 @@ export function detectChanges(text, assets, { context = '' } = {}) {
   for (const clause of source.split(/(?<=[!?;\n])|(?<=\.)(?=\s|$)/)) {
     const ops = opsIn(clause);
     if (ops.length) {
-      const inClause = named.filter((a) => mentionIndex(a, clause) >= 0);
-      // A clause that names no asset ("then rename amount") refers to the assets named elsewhere.
-      for (const a of inClause.length ? inClause : named) {
+      // Only a plain mention counts: "drop x from the orders model" does, "orders_v2" does not.
+      const inClause = named.filter((a) => mentionIndex(a, clause.replace(versionRe(a.name), ' ')) >= 0);
+      const versioned = named.some((a) => versionRe(a.name).test(clause));
+      // A clause that names no asset ("then rename amount") refers to the assets named elsewhere,
+      // unless it is about a new model version.
+      for (const a of inClause.length ? inClause : versioned ? [] : named) {
         let columnHit = false;
         for (const c of a.columns ?? []) {
           for (const m of clause.matchAll(wordRe(c.name))) {

@@ -73,7 +73,7 @@ Everything is deterministic and explainable: each impact says why ("reads discou
 
 ```bash
 npm install
-npm test                      # 37 unit tests, no Forge needed
+npm test                      # 38 unit tests, no Forge needed
 forge login
 forge register
 forge deploy
