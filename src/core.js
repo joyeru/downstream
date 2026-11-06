@@ -370,9 +370,9 @@ export function normalizeReceipt(input, { id, now }) {
   const issueKey = clean(input.issueKey, 40).toUpperCase();
   if (!KEY_RE.test(issueKey)) throw new Error(`"${input.issueKey}" is not a work item key.`);
   const summary = clean(input.summary, 2000);
-  if (!summary) throw new Error('A receipt needs a summary of what changed.');
+  if (!summary) throw new Error('A receipt needs a summary of what changed (the `summary` input).');
   const prUrl = clean(input.prUrl, 500);
-  if (prUrl && !/^https?:\/\/\S+$/i.test(prUrl)) throw new Error('prUrl must be an http(s) link.');
+  if (prUrl && !/^https?:\/\/\S+$/i.test(prUrl)) throw new Error('prUrl must be an http(s) link to the pull request; leave it out if there is none.');
   return {
     id,
     issueKey,
