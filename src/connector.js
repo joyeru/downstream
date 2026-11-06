@@ -78,8 +78,9 @@ export async function fetchProject(config, http = fetch) {
 // Models and sources become documents linked to what they read from; dashboards become
 // dashboards. Work item keys in descriptions link the asset to Jira.
 export function graphObject(a, index, { project, syncedAt }, { withAssociations = true } = {}) {
+  const dashboard = a.type === 'exposure' && a.kind === 'dashboard';
   const object = {
-    schemaVersion: '1.0',
+    schemaVersion: dashboard ? '2.0' : '1.0', // the graph only accepts dashboards at 2.0
     id: a.id,
     updateSequenceNumber: Date.parse(syncedAt) || Date.now(),
     displayName: a.type === 'exposure' ? a.name : `${a.name} (dbt ${a.type})`,
@@ -89,7 +90,7 @@ export function graphObject(a, index, { project, syncedAt }, { withAssociations 
     lastUpdatedAt: syncedAt,
     permissions: [{ accessControls: [{ principals: [{ type: 'ATLASSIAN_WORKSPACE' }] }] }],
   };
-  if (a.type === 'exposure' && a.kind === 'dashboard') {
+  if (dashboard) {
     object['atlassian:dashboard'] = {
       description: assetText(a, index),
       elements: a.dependsOn.map((d) => ({ name: index.byId.get(d)?.name ?? d })),
@@ -120,7 +121,23 @@ export async function pushToGraph(connectionId, assets, meta, g = graph) {
   const rejected = [];
   for (let i = 0; i < linkable.length; i += 100) {
     const batch = linkable.slice(i, i + 100);
-    const res = await g.setObjects({ connectionId, objects: batch.map((a) => graphObject(a, index, meta)) });
+    let res;
+    try {
+      res = await g.setObjects({ connectionId, objects: batch.map((a) => graphObject(a, index, meta)) });
+    } catch (e) {
+      // The SDK throws when any object in the batch is invalid; push one by one so the rest still land.
+      console.error('[downstream] Teamwork Graph batch failed, retrying objects one by one', e.message);
+      for (const a of batch) {
+        try {
+          const one = await g.setObjects({ connectionId, objects: [graphObject(a, index, meta, { withAssociations: false })] });
+          if (one.results?.accepted?.length ?? one.success) accepted += 1;
+          else rejected.push({ key: { entityId: a.id } });
+        } catch (err) {
+          rejected.push({ key: { entityId: a.id }, error: err.message });
+        }
+      }
+      continue;
+    }
     const bad = res.results?.rejected ?? [];
     if (!res.success && !bad.length) throw new Error(`Teamwork Graph ingestion failed: ${res.error ?? 'unknown error'}`);
     accepted += res.results?.accepted?.length ?? batch.length - bad.length;

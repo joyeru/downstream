@@ -87,6 +87,8 @@ test('graphObject maps models to linked documents and dashboards to dashboards',
   const dash = graphObject(index.byId.get('exposure.revenue_dashboard'), index, meta);
   assert.equal(dash.url, 'https://example.com/dashboards/revenue');
   assert.deepEqual(dash['atlassian:dashboard'].elements, [{ name: 'fct_revenue' }]);
+  assert.equal(dash.schemaVersion, '2.0'); // the graph rejects dashboards at 1.0
+  assert.equal(orders.schemaVersion, '1.0');
   assert.equal(graphObject(index.byId.get('model.orders'), index, meta, { withAssociations: false }).associations, undefined);
 });
 
@@ -110,6 +112,20 @@ test('pushToGraph retries objects rejected for their associations and skips unli
   assert.deepEqual(res, { accepted: 11, rejected: 0, skipped: 1 });
   assert.equal(sent.length, 2);
   assert.ok(sent[1].every((o) => !o.associations));
+});
+
+test('pushToGraph pushes objects one by one when the SDK throws for the whole batch', async () => {
+  const bad = 'exposure.revenue_dashboard';
+  const g = {
+    setObjects: async ({ objects }) => {
+      if (objects.some((o) => o.id === bad)) throw new Error('Failed to set objects: Bad Request');
+      return { success: true, results: { accepted: objects.map((o) => ({ entityId: o.id })) } };
+    },
+  };
+  const files = Object.entries(SAMPLE_PROJECT).map(([path, text]) => ({ path, text, url: `https://g/${path}` }));
+  const { assets } = parseDbtProject(files);
+  const res = await pushToGraph('conn-1', assets, { project: 'p', syncedAt: '2026-11-05T00:00:00.000Z' }, g);
+  assert.deepEqual(res, { accepted: 11, rejected: 1, skipped: 0 });
 });
 
 test('syncConnection imports the project into the catalog and the graph', async () => {
